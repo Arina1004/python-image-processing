@@ -1,7 +1,9 @@
 import json
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw,ImageFilter
+import cv2 as cv
 import math
 import copy
+import numpy as np
 
 def load_model(file):
   with open(file) as model:
@@ -43,13 +45,11 @@ def scale_model(data, scale_factor):
   return scaled_model
 
 def draw(model, model_width, model_height, width, height):
-  print(model_width, width, model_height, height)
-  print(float(width) / float(model_width))
   scale_factor = [float(width) / float(model_width), float(height) / float(model_height)]
   scaled_model = scale_model(model, scale_factor)
 
-  print(scale_factor)
-  print(scaled_model[0]['points'])
+  # print(scale_factor)
+  # print(scaled_model[0]['points'])
 
   blank_img = Image.new('RGB', (width, height), (255, 255, 255))
   draw = ImageDraw.Draw(blank_img)
@@ -63,7 +63,49 @@ def draw(model, model_width, model_height, width, height):
 
   blank_img.save('./tmp.png', 'png')
 
-model, width, height = load_model('./models/1.json')
+def filter(im):
+  im = im.convert("L")
+  im2 = Image.new("L",im.size,255)
+
+  im = im.convert("L")
+
+  temp = {}
+
+  for x in range(im.size[1]):
+    for y in range(im.size[0]):
+      pix = im.getpixel((y,x))
+      temp[pix] = pix
+      if pix < 180:
+        im2.putpixel((y,x),0)
+  im2.save("./tmp2.png")
+  return im2
+
+def find_edge(img):
+  inletter = False
+  foundletter=False
+  start = 0
+  end = 0
+
+  letters = []
+
+  for y in range(img.size[0]): # slice across
+    for x in range(img.size[1]): # slice down
+      pix = img.getpixel((y,x))
+      if pix != 255:
+        inletter = True
+    if foundletter == False and inletter == True:
+      foundletter = True
+      start = y
+
+    if foundletter == True and inletter == False:
+      foundletter = False
+      end = y
+      letters.append((start,end))
+
+    inletter=False
+  print(letters)
+model, width, height = load_model('./models/3.json')
 draw(model, width, height, 100, 100)
-
-
+im = Image.open('./example/3.png')
+im=filter(im)
+find_edge(im)
