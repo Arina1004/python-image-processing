@@ -4,6 +4,8 @@ import cv2 as cv
 import math
 import copy
 import numpy as np
+import hashlib
+import time
 
 def load_model(file):
   with open(file) as model:
@@ -80,7 +82,7 @@ def filter(im):
   im2.save("./tmp2.png")
   return im2
 
-def find_edge(img):
+def find_edge_x(img):
   inletter = False
   foundletter=False
   start = 0
@@ -88,8 +90,8 @@ def find_edge(img):
 
   letters = []
 
-  for y in range(img.size[0]): # slice across
-    for x in range(img.size[1]): # slice down
+  for y in range(img.size[0]):
+    for x in range(img.size[1]):
       pix = img.getpixel((y,x))
       if pix != 255:
         inletter = True
@@ -103,9 +105,50 @@ def find_edge(img):
       letters.append((start,end))
 
     inletter=False
-  print(letters)
+  return letters
+def find_edge_y(img):
+  inletter = False
+  foundletter=False
+  start = 0
+  end = 0
+  letters = []
+  for x in range(img.size[1]):
+    for y in range(img.size[0]):
+      pix = img.getpixel((y,x))
+      if pix != 255:
+        inletter = True
+    if foundletter == False and inletter == True:
+      foundletter = True
+      start = x
+
+    if foundletter == True and inletter == False:
+      foundletter = False
+      end = x
+      letters.append((start,end))
+
+    inletter=False
+  return letters
+
+def crop_x(img, letters):
+  count = 0
+  for letter in letters:
+    im2 = img.crop(( letter[0] , 0, letter[1],img.size[1] ))
+    letters_y = find_edge_y(im2)
+    im2 = crop_y(im2,letters_y)
+    im2.save("./numbers/"+str(count)+".png")
+    count += 1
+
+def crop_y(img, letters):
+  count = 0
+  for letter in letters:
+    print(letter[0],letter[1])
+    im2 = img.crop(( 0 , letter[0], img.size[0],letter[1] ))
+    count += 1
+  return im2
+
 model, width, height = load_model('./models/3.json')
 draw(model, width, height, 100, 100)
-im = Image.open('./example/3.png')
-im=filter(im)
-find_edge(im)
+original_im = Image.open('./example/3.png')
+im=filter(original_im)
+letters_x = find_edge_x(im)
+crop_x(im,letters_x)
