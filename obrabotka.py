@@ -43,7 +43,7 @@ def scale_model(data, scale_factor):
 
   return scaled_model
 
-def draw(model, model_width, model_height, width, height,angle):
+def draw(model, model_width, model_height, width, height, angle):
   angle = math.radians(angle)
   scale_factor = [float(width) / float(model_width), float(height) / float(model_height)]
   scaled_model = scale_model(model, scale_factor)
@@ -53,7 +53,9 @@ def draw(model, model_width, model_height, width, height,angle):
   half_width=width/2
   half_height=height/2
   for polygon in scaled_model:
-    points = map(lambda x: ((math.floor(half_width+(x['x']-half_width)*math.cos(angle)+(x['y']-half_height)*math.sin(angle)),math.floor(half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle)))), polygon['points'])
+    points = map(lambda x: ((math.floor((half_width+(x['x']-half_width)*math.cos(angle)+(x['y']-half_height)*math.sin(angle))),
+    math.floor((half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle))))),
+    polygon['points'])
     color = (255, 255, 255) if polygon['transparent'] else (0, 0, 0)
 
     draw.polygon(points, color)
@@ -70,9 +72,12 @@ def rotate(model, model_width, model_height, width, height, angle):
   mas = []
   for polygon in scaled_model:
     color = 255 if polygon['transparent'] else 0
-    points = map(lambda x: ((math.floor(half_width+(x['x']-half_width)*math.cos(angle)+(x['y']-half_height)*math.sin(angle)),math.floor(half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle))),color), polygon['points'])
+    points = map(lambda x: ((math.floor((half_width+(x['x']-half_width)*math.cos(angle)+(x['y']-half_height)*math.sin(angle))),
+    math.floor((half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle)))),color),
+    polygon['points'])
     mas += points
   return mas
+
 def filter(im):
   im = im.convert("L")
   im2 = Image.new("L",im.size,255)
@@ -171,9 +176,9 @@ def alg(img):
   print(numbers)
 
 
-original_im = Image.open('./example/5.png')
+original_im = Image.open('./example/6.png')
 
 alg(original_im)
-
-model, model_width, model_height = load_model('./models/1.json')
-draw(model, model_width, model_height, 20, 20,30)
+original_im = Image.open('./numbers/3.png')
+model, model_width, model_height = load_model('./models/6.json')
+draw(model, model_width, model_height, 20,20,30)
