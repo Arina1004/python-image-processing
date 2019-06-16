@@ -1,11 +1,8 @@
 import json
 from PIL import Image, ImageDraw,ImageFilter
-import cv2 as cv
 import math
 import copy
 import numpy as np
-import hashlib
-import time
 
 def load_model(file):
   with open(file) as model:
@@ -46,20 +43,22 @@ def scale_model(data, scale_factor):
 
   return scaled_model
 
-def draw(model, model_width, model_height, width, height):
+def draw(model, model_width, model_height, width, height,angle):
+  angle = math.radians(angle)
   scale_factor = [float(width) / float(model_width), float(height) / float(model_height)]
   scaled_model = scale_model(model, scale_factor)
 
   blank_img = Image.new('RGB', (width, height), (255, 255, 255))
   draw = ImageDraw.Draw(blank_img)
-
+  half_width=width/2
+  half_height=height/2
   for polygon in scaled_model:
-    points = map(lambda x: (x['x'], x['y']), polygon['points'])
+    points = map(lambda x: ((math.floor(half_width+(x['x']-half_width)*math.cos(angle)+(x['y']-half_height)*math.sin(angle)),math.floor(half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle)))), polygon['points'])
     color = (255, 255, 255) if polygon['transparent'] else (0, 0, 0)
 
     draw.polygon(points, color)
 
-  blank_img.save('./tmp2.png', 'png')
+  blank_img.save('./tmp.png', 'png')
 
 def rotate(model, model_width, model_height, width, height, angle):
   angle = math.radians(angle)
@@ -82,7 +81,7 @@ def filter(im):
     for y in range(im.size[0]):
       pix = im.getpixel((y,x))
       temp[pix] = pix
-      if pix < 180:
+      if pix < 200:
         im2.putpixel((y,x),0)
   im2.save("./tmp2.png")
   return im2
@@ -172,9 +171,9 @@ def alg(img):
   print(numbers)
 
 
-original_im = Image.open('./example/4.png')
+original_im = Image.open('./example/5.png')
 
 alg(original_im)
 
-model, model_width, model_height = load_model('./models/8.json')
-draw(model, model_width, model_height, 20, 20)
+model, model_width, model_height = load_model('./models/1.json')
+draw(model, model_width, model_height, 20, 20,30)
