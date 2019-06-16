@@ -50,9 +50,6 @@ def draw(model, model_width, model_height, width, height):
   scale_factor = [float(width) / float(model_width), float(height) / float(model_height)]
   scaled_model = scale_model(model, scale_factor)
 
-  # print(scale_factor)
-  # print(scaled_model[0]['points'])
-
   blank_img = Image.new('RGB', (width, height), (255, 255, 255))
   draw = ImageDraw.Draw(blank_img)
 
@@ -62,17 +59,25 @@ def draw(model, model_width, model_height, width, height):
 
     draw.polygon(points, color)
 
+  blank_img.save('./tmp2.png', 'png')
 
-  blank_img.save('./tmp.png', 'png')
+def rotate(model, model_width, model_height, width, height, angle):
+  angle = math.radians(angle)
+  scale_factor = [float(width) / float(model_width), float(height) / float(model_height)]
+  scaled_model = scale_model(model, scale_factor)
 
+  half_width=width/2
+  half_height=height/2
+  mas = []
+  for polygon in scaled_model:
+    color = 255 if polygon['transparent'] else 0
+    points = map(lambda x: ((math.floor(half_width+(x['x']-half_width)*math.cos(angle)+(x['y']-half_height)*math.sin(angle)),math.floor(half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle))),color), polygon['points'])
+    mas += points
+  return mas
 def filter(im):
   im = im.convert("L")
   im2 = Image.new("L",im.size,255)
-
-  im = im.convert("L")
-
   temp = {}
-
   for x in range(im.size[1]):
     for y in range(im.size[0]):
       pix = im.getpixel((y,x))
@@ -87,9 +92,7 @@ def find_edge_x(img):
   foundletter=False
   start = 0
   end = 0
-
   letters = []
-
   for y in range(img.size[0]):
     for x in range(img.size[1]):
       pix = img.getpixel((y,x))
@@ -106,6 +109,7 @@ def find_edge_x(img):
 
     inletter=False
   return letters
+
 def find_edge_y(img):
   inletter = False
   foundletter=False
@@ -139,16 +143,38 @@ def crop_x(img, letters):
     count += 1
 
 def crop_y(img, letters):
-  count = 0
+  im2=img
   for letter in letters:
-    print(letter[0],letter[1])
     im2 = img.crop(( 0 , letter[0], img.size[0],letter[1] ))
-    count += 1
   return im2
 
-model, width, height = load_model('./models/3.json')
-draw(model, width, height, 100, 100)
-original_im = Image.open('./example/3.png')
-im=filter(original_im)
-letters_x = find_edge_x(im)
-crop_x(im,letters_x)
+def alg(img):
+  im=filter(img)
+  letters_x = find_edge_x(im)
+  crop_x(im,letters_x)
+  numbers =[]
+  for number in range(4):
+    image = Image.open('./numbers/'+str(number)+'.png')
+    overlap=[]
+    for number_model in range(10):
+      model, model_width, model_height = load_model('./models/'+str(number_model)+'.json')
+      count = 0
+      max_count = 0
+      for angle  in range(-45,46):
+        rotate_image=rotate(model, model_width, model_height, image.size[0], image.size[1],angle)
+        for pixel in rotate_image:
+          if pixel[0][0]>0 and pixel[0][0]< image.size[0] and pixel[0][1]>0 and pixel[0][1]< image.size[1]:
+            count = count+1 if image.getpixel(pixel[0])==pixel[1] else count
+        max_count = count if count > max_count else max_count
+        count = 0
+      overlap.append(max_count)
+    numbers.append(overlap.index(max(overlap)))
+  print(numbers)
+
+
+original_im = Image.open('./example/4.png')
+
+alg(original_im)
+
+model, model_width, model_height = load_model('./models/8.json')
+draw(model, model_width, model_height, 20, 20)
