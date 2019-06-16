@@ -76,6 +76,7 @@ def rotate(model, model_width, model_height, width, height, angle):
     math.floor((half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle)))),color),
     polygon['points'])
     mas += points
+    # mas=[((x,y),color),((x,y),color),((x,y),color),((x,y),color)]
   return mas
 
 def filter(im):
@@ -86,7 +87,7 @@ def filter(im):
     for y in range(im.size[0]):
       pix = im.getpixel((y,x))
       temp[pix] = pix
-      if pix < 200:
+      if pix < 195:
         im2.putpixel((y,x),0)
   im2.save("./tmp2.png")
   return im2
@@ -159,26 +160,30 @@ def alg(img):
   numbers =[]
   for number in range(4):
     image = Image.open('./numbers/'+str(number)+'.png')
+    # image = image.resize((200*image.size[0],200*image.size[1]))
     overlap=[]
     for number_model in range(10):
       model, model_width, model_height = load_model('./models/'+str(number_model)+'.json')
-      count = 0
       max_count = 0
-      for angle  in range(-45,46):
-        rotate_image=rotate(model, model_width, model_height, image.size[0], image.size[1],angle)
-        for pixel in rotate_image:
-          if pixel[0][0]>0 and pixel[0][0]< image.size[0] and pixel[0][1]>0 and pixel[0][1]< image.size[1]:
-            count = count+1 if image.getpixel(pixel[0])==pixel[1] else count
-        max_count = count if count > max_count else max_count
+      for angle  in range(-30,31):
         count = 0
+        count_2 = 0
+        rotate_image=rotate(model, model_width, model_height, image.size[0], image.size[1],angle)
+        # rotate_image=[((x,y),color),((x,y),color),((x,y),color),((x,y),color)]
+        for pixel in rotate_image:
+          if pixel[0][0] > 0 and pixel[0][0] < image.size[0] and pixel[0][1] > 0 and pixel[0][1] < image.size[1]:
+            count = count+1 if image.getpixel(pixel[0]) == pixel[1] and pixel[1] == 0 else count
+            count_2 = count_2 + 1 if image.getpixel(pixel[0]) == 0 or pixel[1] == 0 else count_2
+        max_count = float(count)/float(count_2) if float(count)/float(count_2) > max_count else max_count
       overlap.append(max_count)
     numbers.append(overlap.index(max(overlap)))
+    print(overlap)
   print(numbers)
 
 
-original_im = Image.open('./example/6.png')
-
+original_im = Image.open('./ex/9.png')
+# original_im = original_im.resize((10*original_im.size[0],10*original_im.size[1]))
 alg(original_im)
-original_im = Image.open('./numbers/3.png')
-model, model_width, model_height = load_model('./models/6.json')
-draw(model, model_width, model_height, 20,20,30)
+original_im = Image.open('./numbers/0.png')
+model, model_width, model_height = load_model('./models/1.json')
+draw(model, model_width, model_height, original_im.size[0],original_im.size[1],0)
