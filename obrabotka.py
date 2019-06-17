@@ -60,7 +60,7 @@ def draw(model, model_width, model_height, width, height, angle):
 
     draw.polygon(points, color)
 
-  blank_img.save('./tmp.png', 'png')
+  blank_img.save('./draw/tmp.png', 'png')
 
 def rotate(model, model_width, model_height, width, height, angle):
   angle = math.radians(angle)
@@ -158,7 +158,7 @@ def alg(img):
   letters_x = find_edge_x(im)
   crop_x(im,letters_x)
   numbers =[]
-  for number in range(4):
+  for number in range(2):
     image = Image.open('./numbers/'+str(number)+'.png')
     # image = image.resize((200*image.size[0],200*image.size[1]))
     overlap=[]
@@ -181,9 +181,45 @@ def alg(img):
   print(numbers)
 
 
-original_im = Image.open('./ex/9.png')
+original_im = Image.open('./tmp.png')
 # original_im = original_im.resize((10*original_im.size[0],10*original_im.size[1]))
 alg(original_im)
-original_im = Image.open('./numbers/0.png')
+original_im = Image.open('./numbers/1.png')
+model, model_width, model_height = load_model('./models/2.json')
+draw(model, model_width, model_height, original_im.size[0],original_im.size[1],15)
+def draw2(model, model_width, model_height, width, height, angle):
+  angle = math.radians(angle)
+  scale_factor = [float(10) / float(model_width), float(15) / float(model_height)]
+  scaled_model = scale_model(model, scale_factor)
+
+  blank_img = Image.new('RGB', (width, height), (255, 255, 255))
+  draw = ImageDraw.Draw(blank_img)
+
+  half_width=40/2
+  half_height=15/2
+  scale_factor = [float(10) / float(model_width), float(15) / float(model_height)]
+  scaled_model = scale_model(model, scale_factor)
+  for polygon in scaled_model:
+    points = map(lambda x: ((math.floor((half_width+(x['x']-half_width)*math.cos(angle)+(x['y']-half_height)*math.sin(angle))),
+    math.floor((half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle))))),
+    polygon['points'])
+    color = (255, 255, 255) if polygon['transparent'] else (0, 0, 0)
+
+    draw.polygon(points, color)
+  model, model_width, model_height = load_model('./models/2.json')
+  angle = math.radians(15)
+  half_width=40/2
+  half_height=-160/2
+  scale_factor = [float(14) / float(model_width), float(17) / float(model_height)]
+  scaled_model = scale_model(model, scale_factor)
+  for polygon in scaled_model:
+    points = map(lambda x: ((math.floor((half_width+(x['x']-half_width)*math.cos(angle)+(x['y']-half_height)*math.sin(angle))),
+    math.floor((half_height-1*(x['x']-half_width)*math.sin(angle)+(x['y']-half_height)*math.cos(angle))))),
+    polygon['points'])
+    color = (255, 255, 255) if polygon['transparent'] else (0, 0, 0)
+
+    draw.polygon(points, color)
+
+  blank_img.save('./tmp.png', 'png')
 model, model_width, model_height = load_model('./models/1.json')
-draw(model, model_width, model_height, original_im.size[0],original_im.size[1],0)
+draw2(model, model_width, model_height, 145,26,30)
